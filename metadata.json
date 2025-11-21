@@ -1,0 +1,8 @@
+{
+  "name": "DocuMind AI",
+  "description": "A smart, mobile-first personal document manager. Upload documents, let AI auto-organize them into folders, and use natural language to search and chat with your document library.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
