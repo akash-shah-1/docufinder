@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +22,7 @@ const MOCK_GALLERY_ITEMS = [
 
 export const Gallery = () => {
   const navigate = useNavigate();
-  const { documents, addDocument, folders } = useApp();
+  const { documents, syncGallery, folders } = useApp();
   
   // View State
   const [activeTab, setActiveTab] = useState<'uploads' | 'import'>('uploads');
@@ -34,6 +35,7 @@ export const Gallery = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [galleryItems, setGalleryItems] = useState<typeof MOCK_GALLERY_ITEMS>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSyncing, setIsSyncing] = useState(false);
   
   // Load "Local" images by default for import tab
   useEffect(() => {
@@ -56,24 +58,34 @@ export const Gallery = () => {
     setSelectedIds(newSet);
   };
 
-  const handleImport = () => {
-    const itemsToImport = galleryItems.filter(item => selectedIds.has(item.id));
-    itemsToImport.forEach(item => {
-      addDocument({
-        id: Math.random().toString(36).substr(2, 9),
-        title: item.isDoc ? 'Scanned Document' : 'Gallery Image', 
-        summary: 'Imported from device gallery',
-        category: 'Unsorted',
-        tags: ['import'],
-        imageUrl: item.url,
-        folderId: folders[0]?.id || 'root',
-        createdAt: Date.now(),
-        contentAnalysis: '',
-        dateLabel: 'Imported'
-      });
-    });
-    setActiveTab('uploads');
-    setSelectedIds(new Set());
+  const handleImport = async () => {
+    setIsSyncing(true);
+    try {
+      const itemsToImport = galleryItems
+        .filter(item => selectedIds.has(item.id))
+        .map(item => ({
+          id: Math.random().toString(36).substr(2, 9), // Temp ID, backend will assign real one
+          title: item.isDoc ? 'Scanned Document' : 'Gallery Image', 
+          summary: 'Imported from device gallery',
+          category: 'Unsorted',
+          tags: ['import'],
+          imageUrl: item.url,
+          folderId: 'root',
+          createdAt: Date.now(),
+          contentAnalysis: '',
+          dateLabel: 'Imported'
+        }));
+      
+      await syncGallery(itemsToImport);
+      
+      setActiveTab('uploads');
+      setSelectedIds(new Set());
+    } catch (e) {
+      console.error("Import failed", e);
+      alert("Import failed. Check connection.");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // Derived Data for Uploads
@@ -237,9 +249,10 @@ export const Gallery = () => {
         <div className="fixed bottom-24 left-4 right-4 z-40 animate-in slide-in-from-bottom-10">
             <button 
                 onClick={handleImport}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-xl shadow-black/50 flex items-center justify-center gap-2 transition-all active:scale-95"
+                disabled={isSyncing}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-xl shadow-black/50 flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-70"
             >
-                <RefreshCw size={18} />
+                {isSyncing ? <Loader2 size={18} className="animate-spin"/> : <RefreshCw size={18} />}
                 <span>Import {selectedIds.size} Items</span>
             </button>
         </div>

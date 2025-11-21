@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
@@ -17,7 +16,8 @@ import {
   AlertTriangle,
   Maximize2,
   Loader2,
-  AlignLeft
+  AlignLeft,
+  Edit2
 } from 'lucide-react';
 
 // Set up PDF worker for react-pdf
@@ -31,6 +31,11 @@ export const DocumentDetails = () => {
   const [isMoveMode, setIsMoveMode] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  
+  // Edit Mode State
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSummary, setEditSummary] = useState('');
   
   // PDF State
   const [numPages, setNumPages] = useState<number | null>(null);
@@ -56,6 +61,14 @@ export const DocumentDetails = () => {
     return () => observer.disconnect();
   }, []);
 
+  // Initialize edit state
+  useEffect(() => {
+      if (doc) {
+          setEditTitle(doc.title);
+          setEditSummary(doc.summary);
+      }
+  }, [doc]);
+
   if (!doc) {
     return <div className="p-10 text-center text-slate-500">Document not found</div>;
   }
@@ -67,6 +80,11 @@ export const DocumentDetails = () => {
     deleteDocument(doc.id);
     setDeleteModalOpen(false);
     navigate(-1);
+  };
+
+  const handleSaveEdit = async () => {
+    await updateDocument(doc.id, { title: editTitle, summary: editSummary });
+    setIsEditMode(false);
   };
 
   const handleDownload = async () => {
@@ -174,6 +192,9 @@ export const DocumentDetails = () => {
           <ArrowLeft size={24} />
         </button>
         <div className="flex gap-2">
+           <button onClick={() => setIsEditMode(true)} className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-full transition-colors" title="Edit Details">
+             <Edit2 size={20} />
+           </button>
            <button onClick={() => setIsMoveMode(true)} className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-full transition-colors" title="Move to Folder">
              <FolderInput size={20} />
            </button>
@@ -379,6 +400,52 @@ export const DocumentDetails = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {isEditMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Edit2 size={18} className="text-indigo-400" /> Edit Document
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-slate-400 uppercase font-bold block mb-1">Title</label>
+                <input 
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white focus:border-indigo-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 uppercase font-bold block mb-1">Summary</label>
+                <textarea 
+                  value={editSummary}
+                  onChange={e => setEditSummary(e.target.value)}
+                  rows={4}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:border-indigo-500 outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button 
+                onClick={() => setIsEditMode(false)}
+                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl text-slate-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveEdit}
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-bold flex items-center justify-center gap-2"
+              >
+                <Check size={16} /> Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Move Folder Modal */}
       {isMoveMode && (

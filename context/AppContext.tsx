@@ -6,6 +6,8 @@ interface AppContextType {
   auth: AuthState;
   login: (email?: string, name?: string) => Promise<void>;
   logout: () => void;
+  updateProfile: (name: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   documents: DocumentItem[];
   folders: Folder[];
   isLoading: boolean;
@@ -13,6 +15,7 @@ interface AppContextType {
   updateDocument: (id: string, updates: Partial<DocumentItem>) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
   addFolder: (name: string, color?: string) => Promise<Folder | null>;
+  removeFolder: (id: string) => Promise<void>;
   shareFolder: (folderId: string, email: string) => Promise<void>;
   getFolderById: (id: string) => Folder | undefined;
   getDocumentsByFolder: (folderId: string) => DocumentItem[];
@@ -93,6 +96,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setFolders([]);
   };
 
+  const updateProfile = async (name: string) => {
+    try {
+      const updatedUser = await api.updateUserProfile({ name });
+      setAuth(prev => ({ ...prev, user: updatedUser as User }));
+      localStorage.setItem('documind_user', JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Update profile failed", error);
+      throw error;
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await api.deleteUserAccount();
+      logout();
+    } catch (error) {
+      console.error("Delete account failed", error);
+      throw error;
+    }
+  };
+
   const addFolder = async (name: string, color = 'bg-indigo-500'): Promise<Folder | null> => {
     try {
       const newFolder = await api.createFolder(name, color);
@@ -101,6 +125,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } catch (error) {
       console.error("Failed to create folder", error);
       return null;
+    }
+  };
+
+  const removeFolder = async (id: string) => {
+    try {
+      await api.deleteFolder(id);
+      setFolders(prev => prev.filter(f => f.id !== id));
+      // Also update local docs to root to reflect backend change immediately
+      setDocuments(prev => prev.map(d => d.folderId === id ? { ...d, folderId: 'root' } : d));
+    } catch (error) {
+      console.error("Failed to delete folder", error);
     }
   };
 
@@ -163,6 +198,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       auth, 
       login, 
       logout, 
+      updateProfile,
+      deleteAccount,
       documents, 
       folders, 
       isLoading,
@@ -170,6 +207,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateDocument,
       deleteDocument,
       addFolder,
+      removeFolder,
       shareFolder,
       getFolderById,
       getDocumentsByFolder,

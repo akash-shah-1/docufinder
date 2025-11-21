@@ -1,9 +1,19 @@
 import client from './client';
-import { DocumentItem, Folder } from '../types';
+import { DocumentItem, Folder, User } from '../types';
 
 // --- Auth API ---
 export const loginUser = async (email: string, name: string, avatar?: string) => {
   const response = await client.post('/auth/login', { email, name, avatar });
+  return response.data;
+};
+
+export const updateUserProfile = async (updates: Partial<User>) => {
+  const response = await client.put('/auth/profile', updates);
+  return response.data;
+};
+
+export const deleteUserAccount = async () => {
+  const response = await client.delete('/auth/profile');
   return response.data;
 };
 
@@ -20,6 +30,11 @@ export const createFolder = async (name: string, color: string): Promise<Folder>
 
 export const shareFolderWithUser = async (folderId: string, email: string) => {
   const response = await client.post(`/folders/${folderId}/share`, { email });
+  return response.data;
+};
+
+export const deleteFolder = async (folderId: string) => {
+  const response = await client.delete(`/folders/${folderId}`);
   return response.data;
 };
 

@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { DocumentCard } from '../components/DocumentCard';
-import { ArrowLeft, Share2, Plus, Camera, UploadCloud, X, Check, Image as ImageIcon, LayoutGrid, List, FileText } from 'lucide-react';
+import { ArrowLeft, Share2, Plus, UploadCloud, X, Check, Image as ImageIcon, LayoutGrid, List, FileText, Trash2, AlertTriangle } from 'lucide-react';
 
 // Mock recent gallery items for the drawer
 const MOCK_DRAWER_ITEMS = [
@@ -18,9 +17,10 @@ const MOCK_DRAWER_ITEMS = [
 export const FolderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getFolderById, getDocumentsByFolder, shareFolder, addDocument } = useApp();
+  const { getFolderById, getDocumentsByFolder, shareFolder, addDocument, removeFolder } = useApp();
   const [isDragging, setIsDragging] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [emailToShare, setEmailToShare] = useState('');
   
   // View State
@@ -33,7 +33,7 @@ export const FolderDetails = () => {
   const folder = getFolderById(id || '');
   const docs = getDocumentsByFolder(id || '');
 
-  if (!folder) return <div>Folder not found</div>;
+  if (!folder) return <div className="p-8 text-white">Folder not found</div>;
 
   // --- Drag and Drop Handlers ---
   const handleDragOver = (e: React.DragEvent) => {
@@ -84,6 +84,13 @@ export const FolderDetails = () => {
     setSelectedGalleryIds(new Set());
   };
 
+  const handleDeleteFolder = async () => {
+    if (folder.id) {
+      await removeFolder(folder.id);
+      navigate('/');
+    }
+  };
+
   return (
     <div 
       className={`min-h-screen bg-slate-900 pb-24 transition-colors duration-300 ${isDragging ? 'bg-indigo-900/20' : ''}`}
@@ -101,7 +108,10 @@ export const FolderDetails = () => {
             <button onClick={() => setShareModalOpen(true)} className="p-2 text-slate-300 hover:text-white rounded-full hover:bg-white/10 transition-colors">
               <Share2 size={20} />
             </button>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-white/20 to-white/5 border border-white/10 flex items-center justify-center text-xs font-bold">
+            <button onClick={() => setDeleteModalOpen(true)} className="p-2 text-slate-300 hover:text-red-400 rounded-full hover:bg-red-500/10 transition-colors">
+              <Trash2 size={20} />
+            </button>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-white/20 to-white/5 border border-white/10 flex items-center justify-center text-xs font-bold ml-2">
               {docs.length}
             </div>
           </div>
@@ -324,6 +334,32 @@ export const FolderDetails = () => {
                 className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-500"
               >
                 Invite
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-800 rounded-3xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl">
+            <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-4 mx-auto">
+                <AlertTriangle size={24} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2 text-center">Delete Folder?</h3>
+            <p className="text-slate-400 text-sm text-center mb-6">
+              Are you sure you want to delete <strong>{folder.name}</strong>? 
+              <br/><br/>
+              <span className="text-indigo-300 text-xs bg-indigo-500/10 px-2 py-1 rounded">Safe Delete:</span> Files inside will be moved to 'Unfiled' (Root).
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModalOpen(false)} className="flex-1 py-3 text-slate-300 hover:bg-slate-700 rounded-xl font-medium">Cancel</button>
+              <button 
+                onClick={handleDeleteFolder}
+                className="flex-1 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-500 shadow-lg shadow-red-900/20"
+              >
+                Delete
               </button>
             </div>
           </div>

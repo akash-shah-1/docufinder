@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDocuments, createDocument, updateDocument, deleteDocument, syncGallery } = require('../controllers/documentController');
-const { protect } = require('../index');
+const { protect } = require('../middleware/authMiddleware');
 
 router.get('/', protect, getDocuments);
 router.post('/', protect, createDocument);
