@@ -4,7 +4,7 @@ import * as api from '../api/services';
 
 interface AppContextType {
   auth: AuthState;
-  login: (email?: string, name?: string) => Promise<void>;
+  login: (email?: string, name?: string, avatar?: string) => Promise<void>;
   logout: () => void;
   updateProfile: (name: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -70,10 +70,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const login = async (email = "alex@example.com", name = "Alex Doe") => {
+  const login = async (email = "alex@example.com", name = "Alex Doe", avatar?: string) => {
     try {
       setIsLoading(true);
-      const data = await api.loginUser(email, name);
+      const data = await api.loginUser(email, name, avatar);
       
       localStorage.setItem('documind_token', data.token);
       localStorage.setItem('documind_user', JSON.stringify(data.user));

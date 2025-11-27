@@ -8,6 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const folderRoutes = require('./routes/folderRoutes');
 const documentRoutes = require('./routes/documentRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,6 +26,7 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (req, res) => {
   res.send('DocuMind API is running...');

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useLocation } from 'react-router-dom';
-import { searchDocumentsWithGemini } from '../services/geminiService';
+import { searchDocuments } from '../services/aiService';
 import { Send, Bot, Sparkles, ScanLine, AlertTriangle, FileText } from 'lucide-react';
 import { DocumentCard } from '../components/DocumentCard';
 
@@ -101,7 +101,7 @@ export const AiSearch = () => {
     setMessages(prev => [...prev, userMsg]);
 
     try {
-      const result = await searchDocumentsWithGemini(searchText, documents);
+      const result = await searchDocuments(searchText, documents);
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',

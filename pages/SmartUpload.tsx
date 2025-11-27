@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { analyzeDocumentWithGemini } from '../services/geminiService';
+import { analyzeDocument } from '../services/aiService';
 import { Upload, X, Check, Loader2, FileText, FolderPlus, Plus, AlertCircle, Play, ScanLine, Eye } from 'lucide-react';
 
 interface QueueItem {
@@ -47,13 +47,24 @@ export const SmartUpload = () => {
     }
   }, [queue.length, isProcessing]);
 
-  const addFilesToQueue = (files: File[]) => {
-    const newItems: QueueItem[] = files.map(file => ({
-      id: Math.random().toString(36).substring(2, 9),
-      file,
-      preview: URL.createObjectURL(file),
-      status: 'idle'
-    }));
+  const addFilesToQueue = async (files: File[]) => {
+    // Convert files to base64 data URLs for persistent previews
+    const newItemsPromises = files.map(async (file) => {
+      const preview = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      
+      return {
+        id: Math.random().toString(36).substring(2, 9),
+        file,
+        preview,
+        status: 'idle' as const
+      };
+    });
+    
+    const newItems = await Promise.all(newItemsPromises);
     setQueue(prev => [...prev, ...newItems]);
   };
 
@@ -100,7 +111,7 @@ export const SmartUpload = () => {
         // 1. Analyze
         // Artificial delay for UI satisfaction if analysis is too fast
         const [analysis] = await Promise.all([
-           analyzeDocumentWithGemini(item.file),
+           analyzeDocument(item.file),
            new Promise(resolve => setTimeout(resolve, 2000)) // Min 2s animation for "OCR" feel
         ]);
         

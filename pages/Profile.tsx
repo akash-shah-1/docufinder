@@ -17,13 +17,24 @@ export const Profile = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleLogin = () => {
+  const handleGoogleLogin = () => {
     setIsLoggingIn(true);
-    // Simulate network/auth delay for realism
-    setTimeout(() => {
-      login();
+    // Initialize Google OAuth
+    const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
+    
+    if (!clientId) {
+      alert('Google OAuth not configured. Please add VITE_GOOGLE_CLIENT_ID to .env');
       setIsLoggingIn(false);
-    }, 1500);
+      return;
+    }
+
+    // Use the base origin as redirect URI since we're using HashRouter
+    // Google will append the token as a hash fragment
+    const redirectUri = window.location.origin;
+    const scope = 'email profile';
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+    
+    window.location.href = authUrl;
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -70,7 +81,7 @@ export const Profile = () => {
         
         <div className="w-full max-w-xs space-y-4">
           <button 
-            onClick={handleLogin}
+            onClick={handleGoogleLogin}
             disabled={isLoggingIn}
             className="w-full bg-white text-slate-900 font-bold py-4 rounded-xl flex items-center justify-center space-x-3 hover:bg-slate-100 transition-colors shadow-lg disabled:opacity-70"
           >
@@ -185,16 +196,19 @@ export const Profile = () => {
         </button>
 
         <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+           <div 
+             onClick={() => navigate('/settings')}
+             className="p-4 border-b border-slate-700 flex items-center justify-between hover:bg-slate-700/50 transition-colors cursor-pointer"
+           >
+              <div className="flex items-center text-slate-200">
+                <Shield size={18} className="mr-3 text-slate-400" />
+                <span className="font-medium">AI Settings</span>
+              </div>
+           </div>
            <div className="p-4 border-b border-slate-700 flex items-center justify-between hover:bg-slate-700/50 transition-colors cursor-pointer">
               <div className="flex items-center text-slate-200">
                 <Lock size={18} className="mr-3 text-slate-400" />
                 <span className="font-medium">Security & Privacy</span>
-              </div>
-           </div>
-           <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-700/50 transition-colors">
-              <div className="flex items-center text-slate-200">
-                <Shield size={18} className="mr-3 text-slate-400" />
-                <span className="font-medium">App Permissions</span>
               </div>
            </div>
            <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-700/50 transition-colors">

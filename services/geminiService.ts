@@ -1,19 +1,10 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 import { DocumentItem } from "../types";
+import { AnalysisResult } from "./aiService";
 
 // Initialize Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-export interface AnalysisResult {
-  title: string;
-  category: string;
-  summary: string;
-  tags: string[];
-  importantDate?: string;
-  dateLabel?: string;
-  ocrText?: string;
-}
 
 /**
  * Helper to convert File to Base64
@@ -105,10 +96,7 @@ export const analyzeDocumentWithGemini = async (file: File): Promise<AnalysisRes
  * Chat with documents using natural language.
  * Uses gemini-3-pro-preview to understand the query and filter the list.
  */
-export const searchDocumentsWithGemini = async (query: string, documents: DocumentItem[]): Promise<{
-  relevantDocIds: string[];
-  answer: string;
-}> => {
+export const searchDocumentsWithGemini = async (query: string, documents: DocumentItem[]): Promise<{ relevantDocIds: string[]; answer: string; }> => {
   if (documents.length === 0) return { relevantDocIds: [], answer: "No documents found." };
 
   // Create a lightweight representation of the docs for the prompt

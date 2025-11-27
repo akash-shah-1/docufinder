@@ -2,8 +2,8 @@ import client from './client';
 import { DocumentItem, Folder, User } from '../types';
 
 // --- Auth API ---
-export const loginUser = async (email: string, name: string, avatar?: string) => {
-  const response = await client.post('/auth/login', { email, name, avatar });
+export const loginUser = async (email: string, name: string, avatar?: string, googleId?: string) => {
+  const response = await client.post('/auth/login', { email, name, avatar, googleId });
   return response.data;
 };
 

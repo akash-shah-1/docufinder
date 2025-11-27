@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Folder, Search, Bell, ChevronRight, Grid, List, X, Check } from 'lucide-react';
+import { Folder, Search, Bell, ChevronRight, Grid, List, X, Check, Sparkles } from 'lucide-react';
 import { DocumentCard } from '../components/DocumentCard';
+import { getAIProvider } from '../services/aiService';
 
 export const Home = () => {
-  const { folders, documents, auth, addFolder } = useApp();
+  const { folders, documents, auth, addFolder, login } = useApp();
   const navigate = useNavigate();
   const [filterQuery, setFilterQuery] = useState('');
   const [gridCols, setGridCols] = useState<2 | 3 | 4>(2);
@@ -14,6 +15,29 @@ export const Home = () => {
   // New Folder State
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  
+  // Get current AI provider
+  const aiProvider = getAIProvider();
+
+  // If not authenticated, show login screen
+  if (!auth.isAuthenticated || !auth.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">DocuMind AI</h1>
+            <p className="text-slate-400">Smart Document Management</p>
+          </div>
+          <button
+            onClick={() => login()}
+            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white font-bold transition-colors"
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // Filter Folders
   const filteredFolders = folders.filter(f => 
@@ -52,10 +76,35 @@ export const Home = () => {
             <h1 className="text-xl font-bold text-white">{auth.user?.name.split(' ')[0]}</h1>
           </div>
         </div>
-        <button className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition-colors relative">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-slate-800"></span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => navigate('/settings')}
+            className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 flex items-center gap-1.5 text-xs text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+            title="AI Settings"
+          >
+            <Sparkles size={14} className={
+              aiProvider === 'gemini' ? 'text-purple-400' : 
+              aiProvider === 'openai' ? 'text-green-400' : 
+              aiProvider === 'local' ? 'text-emerald-400' :
+              aiProvider === 'perplexity' ? 'text-cyan-400' :
+              aiProvider === 'groq' ? 'text-orange-400' :
+              'text-yellow-400'
+            } />
+            <span className="font-medium">
+              {aiProvider === 'gemini' ? 'Gemini' : 
+               aiProvider === 'openai' ? 'GPT-4' : 
+               aiProvider === 'local' ? 'Local AI' :
+               aiProvider === 'perplexity' ? 'Perplexity' :
+               aiProvider === 'groq' ? 'Groq' :
+               aiProvider === 'huggingface' ? 'HuggingFace' :
+               'AI'}
+            </span>
+          </button>
+          <button className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition-colors relative">
+            <Bell size={20} />
+            <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-slate-800"></span>
+          </button>
+        </div>
       </header>
 
       {/* Filter Bar */}
